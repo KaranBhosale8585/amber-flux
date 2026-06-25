@@ -318,7 +318,7 @@ Returned if the FastAPI document analyzer endpoint is offline, and a live reques
 
 ## 📮 Postman Collection Structure
 
-The associated [Postman_Collection.json](../Postman_Collection.json) at the root contains the requests pre-built in this hierarchy:
+The associated [Postman_Collection.json](./Postman_Collection.json) at the root contains the requests pre-built in this hierarchy:
 
 ```text
 Quote APIs/
@@ -334,7 +334,7 @@ Quote APIs/
 ```
 
 To use it:
-1. Open Postman, click **Import** and select the [Postman_Collection.json](../Postman_Collection.json) file.
+1. Open Postman, click **Import** and select the [Postman_Collection.json](./Postman_Collection.json) file.
 2. Fire up the backend dev server (`npm run dev` or `docker-compose up`).
 3. Import the collection and run requests in sequence. Ensure you copy the `"id"` string returned from the **Create Quote Request** response, and replace it in subsequent parameterized URLs.
 
@@ -344,8 +344,8 @@ To use it:
 
 * [x] All APIs successfully tested inside Postman.
 * [x] Screenshots placeholders added and detailed in documentation.
-* [x] Postman Collection exported to [Postman_Collection.json](../Postman_Collection.json).
-* [x] [README.md](../README.md) updated with full project installation steps.
+* [x] Postman Collection exported to [Postman_Collection.json](./Postman_Collection.json).
+* [x] [README.md](./README.md) updated with full project installation steps.
 * [x] [API_TESTING.md](./API_TESTING.md) completed with all success/error payloads.
 * [x] Repository initialized and pushed to remote GitHub origin.
 * [x] Backend builds cleanly (`npm run build`) without compiler alerts.
