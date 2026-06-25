@@ -1,4 +1,4 @@
-# Backend Internship Assignment: Quote Analysis Service
+# 🏛️ Backend Internship Assignment: Quote Analysis Service
 
 A production-ready, high-performance Backend Service built with **Node.js, TypeScript, Express.js, Drizzle ORM, and SQLite**, utilizing clean, layered architecture. It integrates with a document analysis service to evaluate project quotes and identify missing requirements.
 
@@ -120,25 +120,7 @@ docker-compose up --build
 
 ---
 
-## 📖 API Documentation
-
-### Interactive Swagger Docs
-Open your browser and navigate to [http://localhost:5000/api/docs](http://localhost:5000/api/docs) to access interactive documentation.
-
-### Summary of Endpoints
-
-| Method | Endpoint | Description | Payloads / Parameters |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/health` | Server status check | None |
-| **POST** | `/api/quotes` | Create a quote request | Body: `{ customer: string, project: string, estimatedValue: number }` |
-| **GET** | `/api/quotes` | Retrieve quotes (with search & pagination) | Query: `customer`, `project`, `page`, `limit` |
-| **GET** | `/api/quotes/:id` | Get quote + analysis results | Path Param: `:id` |
-| **PATCH** | `/api/quotes/:id/status` | Update quote status | Body: `{ status: 'New' \| 'In Review' \| 'Needs Info' \| 'Completed' }` |
-| **POST** | `/api/quotes/:id/analyze` | Perform document analysis | Path Param: `:id`, Query (optional): `forceLive=true` |
-
----
-
-## 🏛️ Design Decisions
+## 🏛️ Design Decisions & Architecture
 
 ### Layered Clean Architecture
 The codebase strictly decouples responsibility using layers:
@@ -180,6 +162,328 @@ All errors are returned in the following layout:
 
 ---
 
-## 📮 Postman Collection
-A complete Postman collection is saved at [Postman_Collection.json](./Postman_Collection.json) at the root of the project.
-Import it directly into Postman, modify the variables, and start hitting endpoints!
+## 🧪 API Testing Guide
+
+### Base URL
+```text
+http://localhost:5000/api
+```
+
+---
+
+### 1. Create Quote
+Creates a new project quote in the database. Defaults the status to `New`.
+
+* **Endpoint**: `POST /quotes`
+* **Request Body**:
+```json
+{
+  "customer": "ABC Constructions",
+  "project": "Commercial Tower",
+  "estimatedValue": 500000
+}
+```
+* **Expected Success Response (201 Created)**:
+```json
+{
+  "id": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+  "customer": "ABC Constructions",
+  "project": "Commercial Tower",
+  "status": "New",
+  "estimatedValue": 500000,
+  "createdDate": "2026-06-25T17:15:30.000Z"
+}
+```
+
+---
+
+### 2. Get All Quotes
+Retrieves all stored quote requests. If no filters are provided, returns all records with default pagination.
+
+* **Endpoint**: `GET /quotes`
+* **Expected Success Response (200 OK)**:
+```json
+[
+  {
+    "id": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+    "customer": "ABC Constructions",
+    "project": "Commercial Tower",
+    "status": "New",
+    "estimatedValue": 500000,
+    "createdDate": "2026-06-25T17:15:30.000Z"
+  },
+  {
+    "id": "5ea50259-25f0-4fa8-b2a6-411a2f6adabf",
+    "customer": "Globex Corporation",
+    "project": "Eco-Friendly Headquarter Office",
+    "status": "New",
+    "estimatedValue": 4500000,
+    "createdDate": "2026-06-25T17:06:55.000Z"
+  }
+]
+```
+
+---
+
+### 3. Get Quote By ID
+Fetches details of a specific quote request along with its document analysis results (if performed).
+
+* **Endpoint**: `GET /quotes/{id}`
+* **Expected Success Response (200 OK)**:
+```json
+{
+  "quote": {
+    "id": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+    "customer": "ABC Constructions",
+    "project": "Commercial Tower",
+    "status": "In Review",
+    "estimatedValue": 500000,
+    "createdDate": "2026-06-25T17:15:30.000Z"
+  },
+  "analysis": {
+    "id": "b3e945c7-df6d-4950-8438-fb1c7ff1ef2e",
+    "quoteId": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+    "risk": "Medium",
+    "confidence": 91,
+    "missingItems": [
+      "Structural drawings",
+      "Load requirements"
+    ],
+    "analyzedAt": "2026-06-25T17:20:10.000Z"
+  }
+}
+```
+
+---
+
+### 4. Analyze Quote
+Triggers document analysis on a quote request. Communicates with the external FastAPI microservice and saves the result in the local database.
+
+* **Endpoint**: `POST /quotes/{id}/analyze`
+* **Expected Success Response (200 OK)**:
+```json
+{
+  "quote": {
+    "id": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+    "customer": "ABC Constructions",
+    "project": "Commercial Tower",
+    "status": "New",
+    "estimatedValue": 500000,
+    "createdDate": "2026-06-25T17:15:30.000Z"
+  },
+  "analysis": {
+    "id": "b3e945c7-df6d-4950-8438-fb1c7ff1ef2e",
+    "quoteId": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+    "risk": "Medium",
+    "confidence": 91,
+    "missingItems": [
+      "Structural drawings",
+      "Load requirements"
+    ],
+    "analyzedAt": "2026-06-25T17:20:10.000Z"
+  }
+}
+```
+
+---
+
+### 5. Update Quote Status
+Modifies the status of a quote request. The status value must be one of: `New`, `In Review`, `Needs Info`, `Completed`.
+
+* **Endpoint**: `PATCH /quotes/{id}/status`
+* **Request Body**:
+```json
+{
+  "status": "In Review"
+}
+```
+* **Expected Success Response (200 OK)**:
+```json
+{
+  "id": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+  "customer": "ABC Constructions",
+  "project": "Commercial Tower",
+  "status": "In Review",
+  "estimatedValue": 500000,
+  "createdDate": "2026-06-25T17:15:30.000Z"
+}
+```
+
+---
+
+### 6. Search Quotes
+Filters the stored quote requests by project name or customer name.
+
+* **Endpoint**: `GET /quotes?customer=ABC` or `GET /quotes?project=Tower`
+* **Expected Success Response (200 OK)**:
+```json
+[
+  {
+    "id": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+    "customer": "ABC Constructions",
+    "project": "Commercial Tower",
+    "status": "In Review",
+    "estimatedValue": 500000,
+    "createdDate": "2026-06-25T17:15:30.000Z"
+  }
+]
+```
+
+---
+
+### 7. Pagination
+Applies pagination offsets and limits to retrieve subset records.
+
+* **Endpoint**: `GET /quotes?page=1&limit=5`
+* **Expected Success Response (200 OK)**:
+```json
+[
+  {
+    "id": "7f87966f-24d1-4475-acb2-2db1ce2320b9",
+    "customer": "ABC Constructions",
+    "project": "Commercial Tower",
+    "status": "In Review",
+    "estimatedValue": 500000,
+    "createdDate": "2026-06-25T17:15:30.000Z"
+  }
+]
+```
+
+---
+
+## 🛡️ Input Validation Test Cases
+
+### Missing Customer
+* **Endpoint**: `POST /quotes`
+* **Request Body**:
+```json
+{
+  "project": "Commercial Tower",
+  "estimatedValue": 500000
+}
+```
+* **Expected Error Response (400 Bad Request)**:
+```json
+{
+  "success": false,
+  "message": "Customer name is required",
+  "error": "VALIDATION_ERROR"
+}
+```
+
+### Missing Project
+* **Endpoint**: `POST /quotes`
+* **Request Body**:
+```json
+{
+  "customer": "ABC Constructions",
+  "estimatedValue": 500000
+}
+```
+* **Expected Error Response (400 Bad Request)**:
+```json
+{
+  "success": false,
+  "message": "Project name is required",
+  "error": "VALIDATION_ERROR"
+}
+```
+
+### Negative Estimated Value
+* **Endpoint**: `POST /quotes`
+* **Request Body**:
+```json
+{
+  "customer": "ABC",
+  "project": "Tower",
+  "estimatedValue": -100
+}
+```
+* **Expected Error Response (400 Bad Request)**:
+```json
+{
+  "success": false,
+  "message": "Estimated value must be greater than or equal to 0",
+  "error": "VALIDATION_ERROR"
+}
+```
+
+### Invalid Status
+* **Endpoint**: `PATCH /quotes/{id}/status`
+* **Request Body**:
+```json
+{
+  "status": "Approved"
+}
+```
+* **Expected Error Response (400 Bad Request)**:
+```json
+{
+  "success": false,
+  "message": "Invalid status. Allowed values: New, In Review, Needs Info, Completed",
+  "error": "VALIDATION_ERROR"
+}
+```
+
+---
+
+## 🚨 Error Handling Edge Cases
+
+### Quote Not Found
+* **Endpoint**: `GET /quotes/invalid-uuid-format`
+* **Expected Response (404 Not Found)**:
+```json
+{
+  "success": false,
+  "message": "Quote with ID invalid-uuid-format not found",
+  "error": "NOT_FOUND"
+}
+```
+
+### FastAPI Service Unavailable
+* **Endpoint**: `POST /quotes/{id}/analyze?forceLive=true`
+* **Expected Response (503 Service Unavailable)**:
+```json
+{
+  "success": false,
+  "message": "FastAPI service connection failed: connect ECONNREFUSED 127.0.0.1:8000",
+  "error": "FASTAPI_UNAVAILABLE"
+}
+```
+
+---
+
+## 📮 Postman Collection Structure
+
+The associated [Postman_Collection.json](./Postman_Collection.json) at the root contains the requests pre-built in this hierarchy:
+
+```text
+Quote APIs/
+├── Quotes/
+│   ├── Create Quote Request
+│   ├── Get All Quotes (With Search and Pagination)
+│   ├── Get Quote Details with Analysis by ID
+│   ├── Update Quote Status
+│   └── Analyze Quote (FastAPI Integration)
+└── System/
+    ├── API Documentation (Swagger)
+    └── System Health Check
+```
+
+To use it:
+1. Open Postman, click **Import** and select the [Postman_Collection.json](./Postman_Collection.json) file.
+2. Fire up the backend dev server (`npm run dev` or `docker-compose up`).
+3. Import the collection and run requests in sequence. Ensure you copy the `"id"` string returned from the **Create Quote Request** response, and replace it in subsequent parameterized URLs.
+
+---
+
+## 📋 Submission Checklist
+
+* [x] All APIs tested in Postman
+* [x] Screenshots captured
+* [x] Postman Collection exported
+* [x] README updated
+* [x] API_TESTING.md completed
+* [x] GitHub repository pushed
+* [x] Project builds successfully
+* [x] All validation scenarios tested
