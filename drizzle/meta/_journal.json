@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1782407339407,
+      "tag": "0000_striped_sally_floyd",
+      "breakpoints": true
+    }
+  ]
+}

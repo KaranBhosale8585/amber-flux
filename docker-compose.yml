@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: quote-service-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DATABASE_URL=/app/data/sqlite.db
+      - FASTAPI_URL=http://fastapi-service:8000
+      - NODE_ENV=production
+    volumes:
+      - db-data:/app/data
+    depends_on:
+      - fastapi-service
+    command: >
+      sh -c "npm run db:migrate && node dist/server.js"
+
+  fastapi-service:
+    image: python:3.10-slim
+    container_name: mock-fastapi-service
+    ports:
+      - "8000:8000"
+    # Command to boot up a quick FastAPI endpoint directly in container
+    command: >
+      sh -c "pip install fastapi uvicorn && 
+             echo 'from fastapi import FastAPI; import uvicorn; app = FastAPI();
+             @app.post(\"/analyze\")
+             async def analyze(payload: dict):
+                 return {\"risk\": \"Medium\", \"missing_items\": [\"Structural drawings\", \"Load requirements\"], \"confidence\": 91}
+             if __name__ == \"__main__\":
+                 uvicorn.run(app, host=\"0.0.0.0\", port=8000)' > main.py &&
+             python main.py"
+
+volumes:
+  db-data:

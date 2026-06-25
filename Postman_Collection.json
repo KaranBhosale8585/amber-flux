@@ -1,0 +1,194 @@
+{
+  "info": {
+    "_postman_id": "8f8c7e6c-389d-4e92-a16f-123cf42167d3",
+    "name": "Quote Analysis API Service Collection",
+    "description": "Postman Collection for the Backend Internship Assignment. Features endpoints for quote creation, retrieval, filtering, status updates, and FastAPI analysis reports.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Quotes",
+      "item": [
+        {
+          "name": "Create Quote Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": \"Wayne Enterprises\",\n  \"project\": \"Subterranean Lab Renovation\",\n  \"estimatedValue\": 9800000.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/quotes",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "quotes"
+              ]
+            },
+            "description": "Creates a new project quote. Standard response is 201 Created returning the quote details."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Quotes (With Search and Pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/quotes?customer=Wayne&project=Lab&page=1&limit=10",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "quotes"
+              ],
+              "query": [
+                {
+                  "key": "customer",
+                  "value": "Wayne",
+                  "description": "Search by customer name"
+                },
+                {
+                  "key": "project",
+                  "value": "Lab",
+                  "description": "Search by project name"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves quote requests. Supports pagination via page/limit and partial match search via customer/project parameters."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Quote Details with Analysis by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/quotes/replace-with-quote-uuid-here",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "quotes",
+                "replace-with-quote-uuid-here"
+              ]
+            },
+            "description": "Fetches a quote's details along with its associated analysis result (if performed, otherwise null)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Quote Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"In Review\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/quotes/replace-with-quote-uuid-here/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "quotes",
+                "replace-with-quote-uuid-here",
+                "status"
+              ]
+            },
+            "description": "Updates the status of a quote. Allowed values: 'New', 'In Review', 'Needs Info', 'Completed'."
+          },
+          "response": []
+        },
+        {
+          "name": "Analyze Quote (FastAPI Integration)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/quotes/replace-with-quote-uuid-here/analyze",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "quotes",
+                "replace-with-quote-uuid-here",
+                "analyze"
+              ]
+            },
+            "description": "Triggers document analysis for the specified quote request, invoking the FastAPI microservice and returning a combined response."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "API Documentation (Swagger)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/docs"
+            },
+            "description": "Load Swagger UI documentation in browser"
+          },
+          "response": []
+        },
+        {
+          "name": "System Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/health"
+            },
+            "description": "Retrieves the server status and time"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

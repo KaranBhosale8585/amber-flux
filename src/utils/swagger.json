@@ -1,0 +1,456 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Quote Analysis API Service",
+    "version": "1.0.0",
+    "description": "Production-ready Node.js, Express, Drizzle ORM, and SQLite backend service for managing and analyzing project quotes. Integrates with a FastAPI document analysis service.",
+    "contact": {
+      "name": "Backend Engineering Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/api/quotes": {
+      "get": {
+        "summary": "Retrieve quotes with pagination and search filtering",
+        "description": "Allows retrieving a list of quotes. Supports searching by customer name or project name, along with pagination parameters.",
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "query",
+            "required": false,
+            "description": "Partial search for customer name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "Partial search for project name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (defaults to 1)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Number of quotes per page (defaults to 10)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of quotes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuoteRequest"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error on query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new quote request",
+        "description": "Creates a new quote request in the database. Defaults the status to 'New'.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "customer",
+                  "project",
+                  "estimatedValue"
+                ],
+                "properties": {
+                  "customer": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Acme Corp"
+                  },
+                  "project": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Warehouse Renovation"
+                  },
+                  "estimatedValue": {
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 150000.5
+                  }
+                }
+              }
+            }
+          },
+          "responses": {}
+        },
+        "responses": {
+          "201": {
+            "description": "Created quote details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (missing customer, missing project, or negative estimated value)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/quotes/{id}": {
+      "get": {
+        "summary": "Get quote details along with its analysis result",
+        "description": "Retrieves the complete details of a quote request by ID, including its related document analysis if one has been performed.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Quote ID (UUID)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quote details and optional analysis result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "quote": {
+                      "$ref": "#/components/schemas/QuoteRequest"
+                    },
+                    "analysis": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/AnalysisResult"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Quote not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/quotes/{id}/status": {
+      "patch": {
+        "summary": "Update the status of a quote request",
+        "description": "Allows updating the status of an existing quote. Status must be one of the permitted values.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Quote ID (UUID)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "New",
+                      "In Review",
+                      "Needs Info",
+                      "Completed"
+                    ],
+                    "example": "In Review"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated quote request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status value provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Quote not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/quotes/{id}/analyze": {
+      "post": {
+        "summary": "Run document analysis on a quote",
+        "description": "Triggers the document analysis. Calls the external FastAPI endpoint to evaluate the risk and detect missing items, then saves the result. Falls back to a mock analysis if FastAPI is offline.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Quote ID (UUID)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "forceLive",
+            "in": "query",
+            "required": false,
+            "description": "If set to true, disables mock fallback and fails if FastAPI service is unavailable",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful analysis response with quote and generated report details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "quote": {
+                      "$ref": "#/components/schemas/QuoteRequest"
+                    },
+                    "analysis": {
+                      "$ref": "#/components/schemas/AnalysisResult"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Quote not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "FastAPI returned invalid JSON response (only raised if FastAPI is active)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "FastAPI service connection failed (only raised when forceLive=true)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "QuoteRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "31b1c676-e3d8-4f10-ae40-e2b217dc3e3a"
+          },
+          "customer": {
+            "type": "string",
+            "example": "Acme Corp"
+          },
+          "project": {
+            "type": "string",
+            "example": "Warehouse Renovation"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "New",
+              "In Review",
+              "Needs Info",
+              "Completed"
+            ],
+            "example": "New"
+          },
+          "estimatedValue": {
+            "type": "number",
+            "example": 150000.5
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-25T22:30:00.000Z"
+          }
+        }
+      },
+      "AnalysisResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "8f8c7e6c-389d-4e92-a16f-123cf42167d3"
+          },
+          "quoteId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "31b1c676-e3d8-4f10-ae40-e2b217dc3e3a"
+          },
+          "risk": {
+            "type": "string",
+            "example": "Medium"
+          },
+          "confidence": {
+            "type": "number",
+            "example": 91
+          },
+          "missingItems": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Structural drawings",
+              "Load requirements"
+            ]
+          },
+          "analyzedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-25T22:31:00.000Z"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Quote with ID 31b1c676-e3d8-4f10-ae40-e2b217dc3e3a not found"
+          },
+          "error": {
+            "type": "string",
+            "example": "NOT_FOUND"
+          }
+        }
+      }
+    }
+  }
+}
